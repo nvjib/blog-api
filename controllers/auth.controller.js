@@ -1,5 +1,37 @@
-const signUp = async (res, req) => {
-  
+const supabase = require("../db")
+const jwt = require("jsonwebtoken")
+const bcrypt = require("bcryptjs")
+
+const JWT_SECRET = process.env.JWT_SECRET
+
+const signUp = async (req, res) => {
+  const { name, email, password } = req.body
+
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: "Missing required fields" })
+  }
+
+  const { data: users, error } = await supabase
+    .from("users")
+    .select()
+    .eq("email", email.toLowerCase())
+    
+  if (error) return res.status(500).json({ error: error.message })
+  if (users && users.length > 0) return res.status(400).json({ error: "User already exists" })
+
+  const hashedPassword = await bcrypt.hash(password, 10)
+
+  const { data: newUser, error: insertError } = await supabase
+    .from("users")
+    .insert({ name, email: email.toLowerCase(), password: hashedPassword })
+    .select()
+
+  if (insertError) return res.status(500).json({ error: insertError.message })
+  if (!newUser || newUser.length === 0) return res.status(500).json({ error: "User could not be created" })
+
+  const token = jwt.sign({ id: newUser[0].id, email: newUser[0].email }, JWT_SECRET, { expiresIn: "1h" })
+
+  return res.status(201).json({ message: "User created successfully", token })
 }
 
 const login = async (req, res) => {
@@ -7,6 +39,5 @@ const login = async (req, res) => {
 }
 
 module.exports = {
-    signUp,
-    login
+    signUp
 }
