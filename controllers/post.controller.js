@@ -27,6 +27,16 @@ const createPost = async (req, res) => {
     return res.status(201).json({ message: "Post created!", data })
 }
 
+const fetchAllPosts = async (req, res) => {
+    const { data, error } = await supabase.from("posts").select("*")
+
+    if (error) return res.status(500).json({ error: error.message })
+    if (!data || data.length === 0) return res.status(404).json({ error: "Posts could not be found" })
+
+    return res.status(200).json(data)
+}
+
 module.exports = {
-    createPost
+    createPost,
+    fetchAllPosts
 }
