@@ -5,9 +5,9 @@ const bcrypt = require("bcryptjs")
 const JWT_SECRET = process.env.JWT_SECRET
 
 const signUp = async (req, res) => {
-  const { name, email, password } = req.body
+  const { name, email, password, role } = req.body
 
-  if (!name || !email || !password) {
+  if (!name || !email || !password || !role) {
     return res.status(400).json({ error: "Missing required fields" })
   }
 
@@ -23,13 +23,13 @@ const signUp = async (req, res) => {
 
   const { data: newUser, error: insertError } = await supabase
     .from("users")
-    .insert({ name, email: email.toLowerCase(), password: hashedPassword })
+    .insert({ name, email: email.toLowerCase(), password: hashedPassword, role})
     .select()
 
   if (insertError) return res.status(500).json({ error: insertError.message })
   if (!newUser || newUser.length === 0) return res.status(500).json({ error: "User could not be created" })
 
-  const token = jwt.sign({ id: newUser[0].id, email: newUser[0].email }, JWT_SECRET, { expiresIn: "1h" })
+  const token = jwt.sign({ id: newUser[0].id, name: newUser[0].name, email: newUser[0].email, role: newUser[0].role }, JWT_SECRET, { expiresIn: "1h" })
 
   return res.status(201).json({ message: "User created successfully", token })
 }
@@ -52,7 +52,7 @@ const login = async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user[0].password)
     if (!isPasswordValid) return res.status(401).json({ error: "Invalid password" })
 
-    const token = jwt.sign({ id: user[0].id, email: user[0].email }, JWT_SECRET, { expiresIn: "1h" })
+    const token = jwt.sign({ id: user[0].id, name: user[0].name, email: user[0].email, role: user[0].role }, JWT_SECRET, { expiresIn: "1h" })
 
     return res.status(200).json({ message: "Logged in successfully", token })
 }
