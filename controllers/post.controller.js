@@ -50,8 +50,32 @@ const singlePost = async (req, res) => {
     return res.status(200).json(data)
 }
 
+const updatePost = async (req, res) => {
+    const { id } = req.params
+    const { title, content } = req.body
+
+    const updateTitle = title.trim()
+    const updateContent = content.trim()
+
+    if (!updateTitle || !updateContent) {
+        return res.status(400).json({ error: "Missing required fields" })
+    }
+
+    const { data, error } = await supabase
+        .from("posts")
+        .update({ title: updateTitle, content: updateContent })
+        .select()
+        .eq("id", id)
+
+    if (error) return res.status(500).json({ error: error.message })
+    if (!data || data.length === 0) return res.status(404).json({ error: "Post not found" })
+
+    return res.status(200).json({ message: "Updated successfully", data })
+}
+
 module.exports = {
     createPost,
     fetchAllPosts,
-    singlePost
+    singlePost,
+    updatePost
 }
