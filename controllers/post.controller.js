@@ -73,9 +73,27 @@ const updatePost = async (req, res) => {
     return res.status(200).json({ message: "Updated successfully", data })
 }
 
+const deletePost = async (req, res) => {
+    const { id } = req.params
+
+    if (!id) return res.status(400).json({ error: "Post ID is required" })
+
+    const { data, error } = await supabase
+        .from("posts")
+        .delete()
+        .select()
+        .eq("id", id)
+
+    if (error) return res.status(500).json({ error: error.message })
+    if (!data || data.length === 0) return res.status(404).json({ error: "Post could not be found" })
+
+    return res.status(200).json({ message: "Post deleted successfully", data })
+}
+
 module.exports = {
     createPost,
     fetchAllPosts,
     singlePost,
-    updatePost
+    updatePost,
+    deletePost
 }
