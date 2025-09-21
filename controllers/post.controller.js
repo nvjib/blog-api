@@ -61,6 +61,16 @@ const updatePost = async (req, res) => {
         return res.status(400).json({ error: "Missing required fields" })
     }
 
+    const { data: post, error: postError } =  await supabase
+        .from("posts")
+        .select()
+        .eq("id", id)
+
+    if (postError) return res.status(500).json({ error: postError.message })
+    if (!post || post.length === 0) return res.status(404).json({ error: "Post not found" })
+    
+    if (req.user.id !== post[0].author_id) return res.status(403).json({ error: "Permission denied: only the author can update this post" })
+
     const { data, error } = await supabase
         .from("posts")
         .update({ title: updateTitle, content: updateContent })
@@ -68,9 +78,8 @@ const updatePost = async (req, res) => {
         .eq("id", id)
 
     if (error) return res.status(500).json({ error: error.message })
-    if (!data || data.length === 0) return res.status(404).json({ error: "Post not found" })
 
-    return res.status(200).json({ message: "Updated successfully", data })
+    return res.status(200).json({ message: "Updated successfully", post: data[0] })
 }
 
 const deletePost = async (req, res) => {
