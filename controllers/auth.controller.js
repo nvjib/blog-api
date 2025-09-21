@@ -1,4 +1,4 @@
-const supabase = require("../db")
+const { findUserByEmail, createUser } = require("../services/user.service")
 const { generateToken, comparePassword, hashPassword } = require("../utils/auth.utils")
 
 const signUp = async (req, res) => {
@@ -8,20 +8,14 @@ const signUp = async (req, res) => {
     return res.status(400).json({ error: "Missing required fields" })
   }
 
-  const { data: users, error } = await supabase
-    .from("users")
-    .select()
-    .eq("email", email.toLowerCase())
-    
+  const { data: users, error } = await findUserByEmail(email)
+
   if (error) return res.status(500).json({ error: error.message })
   if (users && users.length > 0) return res.status(400).json({ error: "User already exists" })
 
   const hashedPassword = await hashPassword(password)
 
-  const { data: newUser, error: insertError } = await supabase
-    .from("users")
-    .insert({ name, email: email.toLowerCase(), password: hashedPassword, role})
-    .select()
+  const { data: newUser, error: insertError } = await createUser({ name, email, password: hashedPassword, role })
 
   if (insertError) return res.status(500).json({ error: insertError.message })
   if (!newUser || newUser.length === 0) return res.status(500).json({ error: "User could not be created" })
@@ -38,11 +32,8 @@ const login = async (req, res) => {
         return res.status(400).json({ error: "Missing required fields" })
     }
 
-    const { data: users, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("email", email.toLowerCase())
-
+    const { data: users, error } = await findUserByEmail(email)
+    
     if (error) return res.status(500).json({ error: error.message })
     if (!users || users.length === 0) return res.status(404).json({ error: "User does not exist" })
 
