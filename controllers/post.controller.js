@@ -6,7 +6,6 @@ const createPost = async (req, res) => {
     const postTitle = title.trim()
     const postContent = content.trim()
     
-
     if (!postTitle || !postContent.trim()) {
         return res.status(400).json({ error: "Missing required fields" })
     }
@@ -17,7 +16,7 @@ const createPost = async (req, res) => {
 
     const { data, error } = await supabase
         .from("posts")
-        .insert({ title: postTitle, content: postContent })
+        .insert({ title: postTitle, content: postContent, author_id: req.user.id })
         .select()
         .single()
 
