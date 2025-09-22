@@ -4,10 +4,6 @@ const { generateToken, comparePassword, hashPassword } = require("../utils/auth.
 const signUp = async (req, res) => {
   const { name, email, password, role } = req.body
 
-  if (!name || !email || !password || !role) {
-    return res.status(400).json({ error: "Missing required fields" })
-  }
-
   const { data: users, error } = await findUserByEmail(email)
 
   if (error) return res.status(500).json({ error: error.message })
@@ -27,13 +23,9 @@ const signUp = async (req, res) => {
 
 const login = async (req, res) => {
     const { email, password } = req.body
-
-    if (!email || !password) {
-        return res.status(400).json({ error: "Missing required fields" })
-    }
-
-    const { data: users, error } = await findUserByEmail(email)
     
+    const { data: users, error } = await findUserByEmail(email)
+
     if (error) return res.status(500).json({ error: error.message })
     if (!users || users.length === 0) return res.status(404).json({ error: "User does not exist" })
 
